@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.IDs;
+import twitter4j.PagableResponseList;
 import twitter4j.Paging;
 import twitter4j.Query;
 import twitter4j.QueryResult;
@@ -18,6 +19,8 @@ import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 
 public class TwitterClass {
+	
+	
 
 	// Timeline anzeigen
 	public static void showTimeline(Twitter t) throws TwitterException {
@@ -39,6 +42,23 @@ public class TwitterClass {
 		} while ((followerCursor = followerIds.getNextCursor()) != 0);
 		return followerList;
 	}
+	
+//	// liefert ResponseList<User> der Following
+//	public static ArrayList<Long> getFollowingList(Twitter twitter) throws IllegalStateException, TwitterException {
+//		long followingCursor = -1;
+//		// A data interface representing array of numeric IDs.
+//		//IDs followingIds;
+//		PagableResponseList<User> followingIds;
+//		ArrayList<Long> allFollowingIds = new ArrayList<Long>();
+//		//PagableResponseList<User> followingList;
+//		do {
+//			followingIds = twitter.getFriendsList(twitter.getId(), followingCursor);
+//			
+//			allFollowingIds.add(followingIds);
+//			//System.out.println(twitter.getId());
+//		} while ((followingCursor = followingIds.getNextCursor()) != 0);
+//		return allFollowingIds;
+//	}
 
 	// liefert ArrayList aller Tweets
 	public static ArrayList<Status> collectStatuses(Twitter twitter) throws IllegalStateException, TwitterException {
@@ -88,12 +108,11 @@ public class TwitterClass {
 	}
 
 	// liefert Anzahl Mentions, geht aber nur bis 100 und ist bereits erreicht
-	private static int countMentions(Twitter twitter, User user) throws TwitterException {
+	static int countMentions(Twitter twitter, User user) throws TwitterException {
 		Query query = new Query("@" + user.getScreenName());
 		// Maximum ist 100!
 		query.setCount(100);
 		QueryResult search = twitter.search(query);
 		return search.getCount();
 	}
-
 }
