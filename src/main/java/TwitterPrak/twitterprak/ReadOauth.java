@@ -1,20 +1,23 @@
 package TwitterPrak.twitterprak;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 
-public class Aufgabe4 {
-    public static void main(String[] args) throws TwitterException, InterruptedException, FileNotFoundException {	
-    	
+public class ReadOauth {
+	public static void main(String[] args) throws TwitterException, InterruptedException, IOException {
         Scanner fileScan = new Scanner(new File("src/oauth.txt"));
-        
+    
         String consumerKey = fileScan.next();
         fileScan.nextLine();
         String consumerSecret = fileScan.next();
@@ -32,13 +35,10 @@ public class Aufgabe4 {
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter twitter = tf.getInstance();
 		
-		User user = twitter.showUser(twitter.getId());
-
-		System.out.println( "TwitterID: " + user.getId() );
-		System.out.println( "TwitterName: " + user.getScreenName() );
-		System.out.println( "Anzahl Follower: " + user.getFollowersCount() );
-		System.out.println( "Anzahl following: " + user.getFriendsCount() );
-		System.out.println( "Anzahl tweets: " + user.getStatusesCount() );
-		System.out.println( "Anzahl Likes: " + user.getFavouritesCount());	
-    }
+       System.out.println("Consumer key: " + consumerKey);      
+       System.out.println("Consumer Secret: " + consumerSecret);
+       System.out.println("OAuthAccessToken: " + OAuthAccessToken);      
+       System.out.println("OAuthAccessTokenSecret: " + OAuthAccessTokenSecret);
+        
+	}
 }

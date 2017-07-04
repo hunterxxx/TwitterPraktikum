@@ -31,19 +31,6 @@ public class Datenbank {
 		return userIDs;
 	}
 
-	// holt die Namen der Follower aus der Datenbank
-	static ArrayList<String> getUserNamesFromDB(MongoCollection<Document> mongoCollection) {
-		MongoCursor<Document> idCursor;
-		Document docOldFollower;
-		idCursor = mongoCollection.find().iterator();
-		ArrayList<String> oldFollowerNames = new ArrayList<String>();
-		while (idCursor.hasNext()) {
-			docOldFollower = idCursor.next();
-			oldFollowerNames.add(docOldFollower.getString("ScreenName"));
-		}
-		return oldFollowerNames;
-	}
-
 	// Collection Inhalt anzeigen (Json optional)
 	static void showCollection(MongoCollection<Document> mongoCollection, String mongoCollectionName) {
 		System.out.println("Einträge in Collection " + mongoCollectionName + ":");
@@ -71,63 +58,6 @@ public class Datenbank {
 		}
 	}
 
-	// sind in der aktuell erstellten followerList(Twitter) neue Follower,
-	// werden diese in die DB eingefügt
-	static void insertNewFollowersInDB(MongoCollection<Document> mongoCollection, ResponseList<User> followerList) {
-		ArrayList<Long> oldFollowerIDs = new ArrayList<Long>();
-		oldFollowerIDs = getUserIDsFromDB(mongoCollection);
-		int followerCount = 0;
-		// Abgleich der akt. followerList mit der der DB
-		// jetzt eigentlich überflüssig, da bei insertUserInDB geprüft wird,
-		// ob der User mit der entspr. ID schon vorhanden ist!
-		for (int i = 0; i < followerList.size(); i++) {
-			if (!(oldFollowerIDs.contains(followerList.get(i).getId()))) {
-				// fügt User in DB ein, isFollowing=true, getsFollowed=false
-				insertUserInDB(followerList.get(i), mongoCollection, true, false);
-				followerCount++;
-			}
-		}
-		if (followerCount == 0) {
-			System.out.println("Keine neuen Follower in DB eingefügt!");
-		}
-	}
-
-	// setzt following Status auf false, falls User nicht mehr folgt
-	// WOFÜR BRAUCHT MAN DIE NOCH??? checkGetsFollowed und
-	// checkIsFollowing!?!?!?!
-	static void setFollowStatus(MongoCollection<Document> mongoCollection, ResponseList<User> followerList) {
-		// erstmal IDs der Follower aus der DB holen
-		ArrayList<Long> dbFollowerIDs = getUserIDsFromDB(mongoCollection);
-		ArrayList<Long> followerIDsAktuell = new ArrayList<Long>();
-		// followerList enthält User, man braucht aber die IDs!
-		// erstellt Liste der IDs der AKTUELLEN Follower(Twitter)
-		for (int i = 0; i < followerList.size(); i++) {
-			followerIDsAktuell.add(followerList.get(i).getId());
-		}
-		// IDs der Follower, die nicht mehr folgen werden gespeichert
-		ArrayList<Long> unFollowerIDs = new ArrayList<Long>();
-
-		// trägt IDs der nicht mehr folgenden User in ArrayList ein
-		for (int i = 0; i < dbFollowerIDs.size(); i++) {
-			// System.out.println(dbFollowerIDs.get(i));
-			// enthält die Liste der aktuellen Follower(Twitter) nicht die ID
-			// der DB-IDs-Liste,
-			// wird der following Status in der DB auf false gesetzt
-			if (!(followerIDsAktuell.contains(dbFollowerIDs.get(i)))) {
-				// System.out.println("User folgt nicht mehr!");
-				unFollowerIDs.add(dbFollowerIDs.get(i));
-			} else {
-				// System.out.println("User folgt.");
-			}
-		}
-		// setze Status der nicht mehr folgenden User in DB auf false
-		for (int i = 0; i < unFollowerIDs.size(); i++) {
-			Bson filter = new Document("User_ID", unFollowerIDs.get(i));
-			Bson newValue = new Document("isFollowing", false);
-			Bson updateOperationDocument = new Document("$set", newValue);
-			mongoCollection.updateOne(filter, updateOperationDocument);
-		}
-	}
 
 	// Zeigt Anzahl und ScreenName der nicht mehr folgenden User an
 	static void showUnfollowers(MongoCollection<Document> mongoCollection) {
@@ -159,14 +89,7 @@ public class Datenbank {
 		return idArrayList;
 	}
 
-	// follow einer Menge von Nutzern und gleichzeitig EINTRAGEN IN DB !!!
-	// ich folge dem Nutzer ja nur, wenn er geprüft wurde, also darf er erst
-	// nach der Prüfung eingetragen werden!!!!
-	// @param ownID muss geprüft werden, da man sich nicht selbst folgen kann!
-	// @param userIDs, die IDs der User, denen gefolgt werden soll
-	// ausserdem muss geprüft werden, ob man den zu folgenden Usern bereits
-	// folgt (ArrayList<Long> whoIfollow)
-	// und ob evtl. FollowAnfragen "pending" sind!
+	// follow einer Menge von Nutzern und gleichzeitig EINTRAGEN IN DB
 	static void followUserSetAndInsertInColl(Twitter twitter, ArrayList<Long> userIDs,
 			MongoCollection<Document> mongoCollection, long ownID) throws TwitterException, InterruptedException {
 		// prüfen auf bereits gesandte Freundschaftsanfragen, deren Bestätigung
@@ -176,23 +99,8 @@ public class Datenbank {
 		ArrayList<Long> pendingArrayList = new ArrayList<Long>();
 		for (int i = 0; i < pendingIdArray.length; i++) {
 			pendingArrayList.add(pendingIdArray[i]);
-			// System.out.println("pending: " + i +
-			// twitter.showUser(pendingIdArray[i]).getName() + " @" +
-			// twitter.showUser(pendingIdArray[i]).getScreenName());
 		}
-
-		// hier rein kommen alle IDs, denen ich nicht bereits folge, die nicht
-		// meine eigene ist und auch nicht "pending" sind (ob ich bereits folge
-		// wird schon in followManyAndInsertInColl geprüft!)
 		ArrayList<Long> idsToFollow = new ArrayList<Long>();
-
-		/*
-		 * jetzt überflüssig! s.o.! // IDs derer, denen ich folge: IDs
-		 * whoIfollow = twitter.getFriendsIDs(-1); long[] whoIfollowArray =
-		 * whoIfollow.getIDs(); ArrayList<Long> whoIfollowArrayList = new
-		 * ArrayList<Long>(); for (int i = 0; i < whoIfollowArray.length; i++) {
-		 * whoIfollowArrayList.add(whoIfollowArray[i]); }
-		 */
 
 		// prüfe IDs, denen gefolgt werden soll
 		for (int i = 0; i < userIDs.size(); i++) {
@@ -211,8 +119,7 @@ public class Datenbank {
 				// twitter.showUser(userIDs.get(i)).getName());
 			}
 		}
-		// System.out.println("IDs to follow size: " + idsToFollow.size());
-
+	
 		// folge allen IDs, die geprüft wurden und trage sie in DB ein
 		for (int i = 0; i < idsToFollow.size(); i++) {
 			// System.out.println("want to follow " +
@@ -227,19 +134,19 @@ public class Datenbank {
 		System.out.println(idsToFollow.size() + " neue User wurden in Collection gespeichert.");
 	}
 
-	// folge einer Anzahl Usern und trage sie in jeweilige Collection ein
-	// je nach Aufgabe 2a,b,c in entspr.Collection! und jeweils mit evtl.
-	// Zusatzaktion!
-	// nutzt die Methode followUserSetAndInsertInColl
-	// @param numberOfUsers: how many Users to follow
-	// @param MongoCollection: coll2a, coll2b, coll2c oder coll300
-	// @param mongoCollectionName:
-	// coll2a: folge 100 Usern
-	// coll2b: folge 100 Usern und like einen aktuellen Post
-	// coll2c: folge 100 Usern, like einen aktuellen Post und kommentiere diesen
-	// mit einem zufälligen Kommentar
-	// oder jeweils *_f mit gefilterten Usern aus der filteredUserColl
-	// @param userIDs: followerIDs des Influencer Accounts
+	 /**folge einer Anzahl Usern und trage sie in jeweilige Collection ein
+	 je nach Aufgabe 2a,b,c in entspr.Collection! und jeweils mit evtl.
+	 Zusatzaktion!
+	 nutzt die Methode followUserSetAndInsertInColl
+	 @param numberOfUsers: how many Users to follow
+	 @param MongoCollection: coll2a, coll2b, coll2c oder coll300
+	 @param mongoCollectionName:
+	 coll2a: folge 100 Usern
+	 coll2b: folge 100 Usern und like einen aktuellen Post
+	 coll2c: folge 100 Usern, like einen aktuellen Post und kommentiere diesen
+	 mit einem zufälligen Kommentar
+	 oder jeweils *_f mit gefilterten Usern aus der filteredUserColl
+	 @param userIDs: followerIDs des Influencer Accounts **/
 	static void followManyAndInsertInColl(Twitter twitter, ArrayList<Long> userIDs, long ownID,
 			MongoCollection<Document> mongoCollection, int numberOfUsers, String mongoCollectionName,
 			ArrayList<String> commentList) throws TwitterException, InterruptedException {
@@ -423,7 +330,7 @@ public class Datenbank {
 	// entfolge einem Nutzer der nach 3 Tagen immer noch nicht zurück folgt
 	// und setze follow status in DB auf false
 	// UNGETESTET!!!!
-	static void unfollowWhoNotFollowsBack(Twitter twitter, MongoCollection<Document> mongoCollection)
+	static void unfollowWhoNotFollowsBack(Twitter twitter, MongoCollection<Document> mongoCollection, int tage)
 			throws TwitterException {
 		int count = 0;
 		MongoCursor<Document> cursor;
@@ -440,7 +347,7 @@ public class Datenbank {
 			isFollowing = userDoc.getBoolean("isFollowing");
 			// sind mehr als 3 Tage seit dem folgen vergangen und der User folgt
 			// nicht zurück->unfollow
-			if (((double) (dateNow.getTime() - insertDate.getTime()) / 86400000) > 3) {
+			if (((double) (dateNow.getTime() - insertDate.getTime()) / 86400000) > tage) {
 				if (!isFollowing) {
 					twitter.destroyFriendship(id);
 					// setze followStatus des Users auf false
@@ -601,19 +508,18 @@ public class Datenbank {
 			}
 			if (userDoc.getBoolean("getsFollowed", true)) {
 				friendsCount++;
-			}
+			} 
+		} if(friendsCount == 0){
+			System.out.println("Keine neuen User dieser Coll. folgen jetzt.");
+			return 0;
 		}
-		return (double) followerCount / (double) friendsCount;
+		return (double) (followerCount / friendsCount);
 	}
 
-	// falls was schief geht....
-	// setzt NICHT follow status in DB!
+	/** falls was schief geht....
+	 setzt NICHT follow status in DB! **/
 	static void unfollowUsers(Twitter twitter, ArrayList<Long> idList) throws IllegalStateException, TwitterException {
 		int unFollowersCount = 0;
-		// long cursor = -1;
-		// IDs aller,denen ich folge
-		// IDs friendsIDs = twitter.getFriendsIDs(twitter.getId(), cursor);
-		// long[] idArray = friendsIDs.getIDs();
 
 		for (Long ids : idList) {
 			twitter.destroyFriendship(ids);
@@ -623,10 +529,11 @@ public class Datenbank {
 		System.out.println(unFollowersCount + " User wurden entfollowed.");
 	}
 
-	// Manchmal waren die Server überlastet, man hat angefangen zu followen,
-	// dann Abbruch, aber es
-	// sollte noch geliked werden!
-	// liked die tweets von Usern einer DB
+	/** Manchmal waren die Server überlastet, man hat angefangen zu followen,
+	 dann Abbruch, aber es
+	 sollte noch geliked werden!
+	 liked die tweets von Usern einer DB
+	 **/
 	static void likeSomeUsers(Twitter twitter, MongoCollection<Document> mongoCollection)
 			throws InterruptedException, TwitterException {
 		ArrayList<Long> idsToLike = getUserIDsFromDB(mongoCollection);
@@ -641,9 +548,6 @@ public class Datenbank {
 			// like aktuellen Status
 			try {
 				twitter.createFavorite(status.getId());
-				// System.out.println("Tweet von " +
-				// twitter.showUser(idsToFollow.get(j)).getScreenName() + "
-				// wurde geliked.");
 				System.out.println("Tweet wurde geliked.");
 			} catch (java.lang.NullPointerException e) {
 				System.out.println("User hat noch nicht getweetet, liken unmöglich!");

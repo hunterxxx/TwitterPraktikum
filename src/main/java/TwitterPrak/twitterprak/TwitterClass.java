@@ -20,10 +20,20 @@ import twitter4j.conf.ConfigurationBuilder;
 
 public class TwitterClass {
 	
-	
+	// Authentifizierung für Twitter (erste Schritt)
+//	static Twitter OAuth(String consumerKey, String consumerSecret, String OAuthAccessToken, String OAuthAccessTokenSecret){
+//		ConfigurationBuilder cb = new ConfigurationBuilder();
+//		cb.setDebugEnabled(true).setOAuthConsumerKey(consumerKey)
+//				.setOAuthConsumerSecret(consumerSecret)
+//				.setOAuthAccessToken(OAuthAccessToken)
+//				.setOAuthAccessTokenSecret(OAuthAccessTokenSecret);
+//		TwitterFactory tf = new TwitterFactory(cb.build());
+//		Twitter twitter = tf.getInstance();
+//		return twitter;
+//	}
 
 	// Timeline anzeigen
-	public static void showTimeline(Twitter t) throws TwitterException {
+	static void showTimeline(Twitter t) throws TwitterException {
 		List<Status> status = t.getHomeTimeline();
 		for (Status st : status) {
 			System.out.println(st.getUser().getName() + st.getText());
@@ -31,7 +41,7 @@ public class TwitterClass {
 	}
 
 	// liefert ResponseList<User> der Follower
-	public static ResponseList<User> getFollowerList(Twitter twitter) throws IllegalStateException, TwitterException {
+	static ResponseList<User> getFollowerList(Twitter twitter) throws IllegalStateException, TwitterException {
 		long followerCursor = -1;
 		// A data interface representing array of numeric IDs.
 		IDs followerIds;
@@ -43,25 +53,8 @@ public class TwitterClass {
 		return followerList;
 	}
 	
-//	// liefert ResponseList<User> der Following
-//	public static ArrayList<Long> getFollowingList(Twitter twitter) throws IllegalStateException, TwitterException {
-//		long followingCursor = -1;
-//		// A data interface representing array of numeric IDs.
-//		//IDs followingIds;
-//		PagableResponseList<User> followingIds;
-//		ArrayList<Long> allFollowingIds = new ArrayList<Long>();
-//		//PagableResponseList<User> followingList;
-//		do {
-//			followingIds = twitter.getFriendsList(twitter.getId(), followingCursor);
-//			
-//			allFollowingIds.add(followingIds);
-//			//System.out.println(twitter.getId());
-//		} while ((followingCursor = followingIds.getNextCursor()) != 0);
-//		return allFollowingIds;
-//	}
-
 	// liefert ArrayList aller Tweets
-	public static ArrayList<Status> collectStatuses(Twitter twitter) throws IllegalStateException, TwitterException {
+	static ArrayList<Status> collectStatuses(Twitter twitter) throws IllegalStateException, TwitterException {
 		ArrayList<Status> statusList = new ArrayList<Status>();
 		int pageNumber = 1;
 		while (true) {
@@ -79,7 +72,7 @@ public class TwitterClass {
 		return statusList;
 	}
 
-	public static void showList(Twitter twitter, ArrayList<Long> list) throws TwitterException {
+	static void showList(Twitter twitter, ArrayList<Long> list) throws TwitterException {
 		if(list.isEmpty()) {
 			System.out.println("Keine Listeneinträge!");
 		}
@@ -90,7 +83,7 @@ public class TwitterClass {
 	}
 
 	// liefert Gesamtzahl aller Retweets
-	public static int countRetweets(ArrayList<Status> statusList) {
+	static int countRetweets(ArrayList<Status> statusList) {
 		int count = 0;
 		for (int i = 0; i < statusList.size(); i++) {
 			count = count + statusList.get(i).getRetweetCount();
@@ -98,8 +91,8 @@ public class TwitterClass {
 		return count;
 	}
 
-	// liefert Gesamtzahl likes (nur 52 obwohl ich 56 habe!?)
-	public static int countLikes(ArrayList<Status> statusList) throws IllegalStateException, TwitterException {
+	// liefert Gesamtzahl likes
+	static int countLikes(ArrayList<Status> statusList) throws IllegalStateException, TwitterException {
 		int likes = 0;
 		for (int i = 0; i < statusList.size(); i++) {
 			likes = likes + statusList.get(i).getFavoriteCount();
