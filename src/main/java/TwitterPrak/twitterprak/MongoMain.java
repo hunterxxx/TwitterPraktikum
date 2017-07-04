@@ -68,21 +68,34 @@ public class MongoMain {
 		MongoClientURI mongoClientURI = new MongoClientURI("mongodb://localhost:27017");
 		MongoClient mongoClient = new MongoClient(mongoClientURI);
 
-		// fColl (Followers), coll2a, coll2b, coll2c, coll2a_f, coll2b_f, coll2c_f oder testColl
+		//verwendete Collection setzen
+		//fColl (Followers), coll2a, coll2b, coll2c, coll2a_f, coll2b_f, coll2c_f oder testColl
 		String mongoCollectionName = nameOfMongoCollection;
 
 		MongoDatabase mongoDatabase = mongoClient.getDatabase(mongoCollectionName);
 		MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(mongoCollectionName);
-
+		
+		//diese wird EXTRA benötigt!!! wenn man aus ihr User extrahieren und sie in coll2a_f,
+		//coll2b_f oder coll2c_f einfügen will
+		MongoDatabase filteredDatabase = mongoClient.getDatabase("filteredUserColl");
+		MongoCollection<Document> filteredCollection = filteredDatabase.getCollection( "filteredUserColl" );
+		
+		// Filtert User eines Influencers Account, und speichert gefundene User in Collection
 		Datenbank.filterUsersAndSaveInDB(mongoCollection, twitter, Datenbank.getFollowerIdArrayList(twitter, followerIDs), lowerlimit, upperlimit, tweetCounts, tage);
 		 
-//		Datenbank.followManyAndInsertInColl(twitter, Datenbank.getFollowerIdArrayList(twitter, "MBrundleF1"), twitter.getId(), mongoCollection, 100, mongoCollectionName, Comment.commentList());		 
-
-//		Datenbank.checkAndSetGetsFollowed(TwitterClass.OAuth(), mongoCollection);
-//		Datenbank.checkAndSetIsFollowing(TwitterClass.OAuth(), mongoCollection);
-		Datenbank.showCollection(mongoCollection, mongoCollectionName);
+		//Beispiel 2a Ohne Filter, coll2a gibt es keine Kommentare
+//		Datenbank.followManyAndInsertInColl(twitter, Datenbank.getFollowerIdArrayList(twitter, "MBrundleF1"), twitter.getId(), mongoCollection, 100, mongoCollectionName, Comment.commentList());		 		
+//		System.out.println(Datenbank.getDBRatio(mongoCollection));
 		
-//		 System.out.println(Datenbank.getDBRatio(mongoCollection));
+		//Beispiel Aufgabe 2c MIT FILTER:
+		//@param filteredCollection für die find Methode!!!
+		//@param mongoCollection: die, in die eingefügt wird, wie üblich, MUSS OBEN GESETZT WERDEN!!!	
+		//Datenbank.followManyAndInsertInColl(twitter, Datenbank.findFilteredUsersForAction(twitter, filteredCollection), twitter.getId(), mongoCollection, 100, mongoCollectionName, commentList);
+		//WICHTIG!!! Danach immer ausführen, auf der filteredCollection!!!! Nicht gleichzeitig durchgeführt wegen Rate Limit
+		//Datenbank.checkAndSetGetsFollowed(twitter, filteredCollection);
+		//Datenbank.checkAndSetIsFollowing(twitter, filteredCollection);
+		//Datenbank.showCollection(mongoCollection, mongoCollectionName);	//zeige coll2c_f	
+		
 		mongoClient.close();
 	}
 }

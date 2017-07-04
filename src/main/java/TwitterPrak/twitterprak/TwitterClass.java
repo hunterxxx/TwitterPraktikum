@@ -19,31 +19,9 @@ import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 
 public class TwitterClass {
-	
-	// Authentifizierung für Twitter (erste Schritt)
-//	static Twitter OAuth(String consumerKey, String consumerSecret, String OAuthAccessToken, String OAuthAccessTokenSecret){
-//		ConfigurationBuilder cb = new ConfigurationBuilder();
-//		cb.setDebugEnabled(true).setOAuthConsumerKey(consumerKey)
-//				.setOAuthConsumerSecret(consumerSecret)
-//				.setOAuthAccessToken(OAuthAccessToken)
-//				.setOAuthAccessTokenSecret(OAuthAccessTokenSecret);
-//		TwitterFactory tf = new TwitterFactory(cb.build());
-//		Twitter twitter = tf.getInstance();
-//		return twitter;
-//	}
-
-	// Timeline anzeigen
-	static void showTimeline(Twitter t) throws TwitterException {
-		List<Status> status = t.getHomeTimeline();
-		for (Status st : status) {
-			System.out.println(st.getUser().getName() + st.getText());
-		}
-	}
-
 	// liefert ResponseList<User> der Follower
 	static ResponseList<User> getFollowerList(Twitter twitter) throws IllegalStateException, TwitterException {
 		long followerCursor = -1;
-		// A data interface representing array of numeric IDs.
 		IDs followerIds;
 		ResponseList<User> followerList;
 		do {
